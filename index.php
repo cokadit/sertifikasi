@@ -10,6 +10,15 @@ $db = new DBConnection();
 $conn = $db->conn;
 $banten = BantenFunctions::getAllBanten($conn);
 
+
+
+// Fetch recent history
+$stmt = $conn->prepare("SELECT * FROM history ORDER BY action_date DESC LIMIT 10");
+$stmt->execute();
+$history = $stmt->get_result();
+$stmt->close();
+
+
 if (isset($_SESSION['message'])) {
     echo '<div class="alert alert-success alert-dismissible fade show">' . $_SESSION['message'] . '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div>';
     unset($_SESSION['message']);
@@ -32,9 +41,10 @@ if (isset($_SESSION['message'])) {
         </tr>
     </thead>
     <tbody>
+        <?php $i = 1; ?>
         <?php while ($row = $banten->fetch_assoc()) { ?>
         <tr>
-            <td><?php echo $row['id']; ?></td>
+            <td><?php echo $i++; ?></td>
             <td><?php echo $row['name']; ?></td>
             <td>Rp.<?php echo $row['price']; ?></td>
             <td><?php echo $row['description']; ?></td>
@@ -53,6 +63,57 @@ if (isset($_SESSION['message'])) {
             </td>
         </tr>
         <?php } ?>
+    </tbody>
+</table>
+
+<h2 class="mb-4 mt-5">History</h2>
+<table id="historyTable" class="table">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Nama Produk</th>
+            <th>Action</th>
+            <th>Description</th>
+            <th>Changed Fields</th>
+            <th>Action Date</th>
+            <th>Status</th>
+        </tr>
+    </thead>
+    <tbody>
+        <?php while ($row = $history->fetch_assoc()): ?>
+        <tr>
+            <td><?= $row['id'] ?></td>
+            <td><?= $row['banten_id'] ?></td>
+            <td><?= $row['action'] ?></td>
+            <td><?= $row['description'] ?></td>
+            <td>
+                <?php
+                    $prev_data = json_decode($row['prev_data'], true);
+                    $new_data = json_decode($row['new_data'], true);
+
+                    // print_r($prev_data);
+                    // echo "<br>";
+                    // print_r($new_data);
+
+                    $changes = BantenFunctions::getChangedFields($prev_data, $new_data);
+
+                    if (!empty($changes)) {
+                        foreach ($changes as $field => $change) {
+                            echo "<strong>$field:</strong> " . $change['prev'] . " -> " . $change['new'] . "<br>";
+                        }
+                    } elseif ($row['action'] == 'delete') {
+                        echo "Deleted record";
+                    } elseif ($row['action'] == 'add') {
+                        echo "Added record";
+                    }else {
+                        echo "No changes made.";
+                    }
+                ?>
+            </td>
+            <td><?= $row['action_date'] ?></td>
+            <td><?= $row['status'] ?></td>
+        </tr>
+        <?php endwhile; ?>
     </tbody>
 </table>
 
