@@ -25,6 +25,8 @@ if (isset($_SESSION['message'])) {
             <th>Harga</th>
             <th>Deskripsi</th>
             <th>Jumlah</th>
+            <th>Minimal Grosir</th>
+            <th>Harga Grosir</th>
             <th>Gambar</th>
             <th>Aksi</th>
         </tr>
@@ -37,6 +39,8 @@ if (isset($_SESSION['message'])) {
             <td>Rp.<?php echo $row['price']; ?></td>
             <td><?php echo $row['description']; ?></td>
             <td><?php echo $row['quantity']; ?></td>
+            <td><?php echo $row['min_grosir']; ?></td>
+            <td>Rp.<?php echo $row['grosir_price']; ?></td>
             <td> <?php if (!empty($row['image']) && file_exists('images/' . $row['image'])) { ?>
                 <img src="images/<?php echo $row['image']; ?>" alt="<?php echo $row['name']; ?>" width="100">
                 <?php } else { ?>

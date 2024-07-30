@@ -13,17 +13,18 @@ class BantenFunctions{
         return $result;
     }
     
-    public static function addBanten($conn, $name, $price, $description, $quantity, $image) {
-        $sql = "INSERT INTO banten (name, price, description, quantity, image) VALUES (?, ?, ?, ?, ?)";
+    public static function addBanten($conn, $name, $price, $description, $quantity, $min_grosir, $grosir_price, $image) {
+
+        $sql = "INSERT INTO banten (name, price, description, quantity, min_grosir, grosir_price, image) VALUES (?, ?, ?, ?, ?, ?, ?)";
         $stmt = $conn->prepare($sql);
-        $stmt->bind_param("sdsss", $name, $price, $description, $quantity, $image);
+        $stmt->bind_param("sdssiis", $name, $price, $description, $quantity, $min_grosir, $grosir_price, $image);
         return $stmt->execute();
     }
     
-    public static function editBanten($conn, $id, $name, $price, $description, $quantity, $image) {
-        $sql = "UPDATE banten SET name=?, price=?, description=?, quantity=?, image=? WHERE id=?";
+    public static function editBanten($conn, $id, $name, $price, $description, $quantity, $min_grosir, $grosir_price, $image) {
+        $sql = "UPDATE banten SET name=?, price=?, description=?, quantity=?, min_grosir=?, grosir_price=?, image=? WHERE id=?";
         $stmt = $conn->prepare($sql);
-        $stmt->bind_param("sdsssi", $name, $price, $description, $quantity, $image, $id);
+        $stmt->bind_param("sdssiisi", $name, $price, $description, $quantity, $min_grosir, $grosir_price, $image, $id);
         return $stmt->execute();
     }
     

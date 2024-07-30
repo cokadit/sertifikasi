@@ -19,23 +19,52 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $price = $_POST['price'];
     $description = $_POST['description'];
     $quantity = $_POST['quantity'];
+    $min_grosir = isset($_POST['min_grosir']) ? $_POST['min_grosir'] : 0;
+    $grosir_price = null;
     $image = $_FILES['image']['name'];
 
-    if ($image) {
-        $target_dir = "images/";
-        $target_file = $target_dir . basename($image);
-        move_uploaded_file($_FILES['image']['tmp_name'], $target_file);
-    } else {
-        $image = $banten['image'];
-    }
+    // Check if the name already exists, excluding the current record
+    $stmt = $conn->prepare("SELECT COUNT(*) FROM banten WHERE name = ? AND id != ?");
+    $stmt->bind_param("si", $name, $id);
+    $stmt->execute();
+    $stmt->bind_result($count);
+    $stmt->fetch();
+    $stmt->close();
 
-    if (BantenFunctions::editBanten($conn, $id, $name, $price, $description, $quantity, $image)) {
-        $_SESSION['message'] = "Banten berhasil diupdate";
-        header('Location: index.php');
-        exit();
+    if ($count > 0) {
+        $_SESSION['message'] = "Nama banten sudah ada, silakan gunakan nama lain.";
     } else {
-        $_SESSION['message'] = "Gagal mengupdate banten";
+        // Generate unique name for the image
+        if ($image) {
+            $image = time() . '_' . basename($image);
+            $target_dir = "images/";
+            $target_file = $target_dir . $image;
+            move_uploaded_file($_FILES['image']['tmp_name'], $target_file);
+        } else {
+            $image = $banten['image'];
+        }
+
+        // Calculate grosir price
+        if (isset($_POST['grosir']) && $_POST['grosir'] == 'yes') {
+            $grosir_price = $price * 0.95; // 5% discount
+        } else {
+            $grosir_price = 0;
+            $min_grosir = 0;
+        }
+
+        if (BantenFunctions::editBanten($conn, $id, $name, $price, $description, $quantity, $min_grosir, $grosir_price, $image)) {
+            $_SESSION['message'] = "Banten berhasil diupdate";
+            header('Location: index.php');
+            exit();
+        } else {
+            $_SESSION['message'] = "Gagal mengupdate banten";
+        }
     }
+}
+
+if (isset($_SESSION['message'])) {
+    echo '<div class="alert alert-warning alert-dismissible fade show">' . $_SESSION['message'] . '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div>';
+    unset($_SESSION['message']);
 }
 ?>
 
@@ -47,15 +76,27 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     </div>
     <div class="mb-3">
         <label for="price" class="form-label">Harga</label>
-        <input type="number" class="form-control" id="price" name="price" step="0.01" value="<?php echo $banten['price']; ?>" required>
+        <input type="number" class="form-control" id="price" name="price" step="0.01"
+            value="<?php echo $banten['price']; ?>" required>
     </div>
     <div class="mb-3">
         <label for="description" class="form-label">Deskripsi</label>
-        <textarea class="form-control" id="description" name="description"><?php echo $banten['description']; ?></textarea>
+        <textarea class="form-control" id="description"
+            name="description"><?php echo $banten['description']; ?></textarea>
     </div>
     <div class="mb-3">
         <label for="quantity" class="form-label">Jumlah</label>
-        <input type="number" class="form-control" id="quantity" name="quantity" value="<?php echo $banten['quantity']; ?>" required>
+        <input type="number" class="form-control" id="quantity" name="quantity"
+            value="<?php echo $banten['quantity']; ?>" required>
+    </div>
+    <div class="mb-3 form-check">
+        <input type="checkbox" class="form-check-input" id="grosir" name="grosir" value="yes">
+        <label class="form-check-label" for="grosir">Hitung Harga Grosir (Diskon 5%)</label>
+    </div>
+    <div class="mb-3" id="minGrosirGroup">
+        <label for="quantity" class="form-label">Jumlah Minimal Grosir</label>
+        <input type="number" class="form-control" id="min_grosir" name="min_grosir"
+            value="<?php echo $banten['quantity']; ?>">
     </div>
     <div class="mb-3">
         <label for="image" class="form-label">Gambar</label>
@@ -65,4 +106,34 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     <button type="submit" class="btn btn-primary">Update</button>
 </form>
 
+<script>
+function toggleMinGrosir() {
+    var grosirCheckbox = document.getElementById('grosir');
+    var minGrosirGroup = document.getElementById('minGrosirGroup');
+    if (grosirCheckbox.checked) {
+        minGrosirGroup.style.display = 'block';
+    } else {
+        minGrosirGroup.style.display = 'none';
+    }
+}
+
+// Check if grosir_price is above 0 and set the checkbox and show the input field
+window.onload = function() {
+    var grosirPrice = <?php echo $banten['grosir_price']; ?>;
+    var grosirCheckbox = document.getElementById('grosir');
+    var minGrosirGroup = document.getElementById('minGrosirGroup');
+
+    if (grosirPrice > 0) {
+        grosirCheckbox.checked = true;
+        minGrosirGroup.style.display = 'block';
+    } else {
+        grosirCheckbox.checked = false;
+        minGrosirGroup.style.display = 'none';
+    }
+
+    grosirCheckbox.addEventListener('change', toggleMinGrosir);
+};
+
+toggleMinGrosir();
+</script>
 <?php include 'includes/footer.php'; ?>
