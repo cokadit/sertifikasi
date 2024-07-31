@@ -13,7 +13,8 @@ $banten = BantenFunctions::getAllBanten($conn);
 
 
 // Fetch recent history
-$stmt = $conn->prepare("SELECT * FROM history ORDER BY action_date DESC LIMIT 10");
+$stmt = $conn->prepare("SELECT history.id, banten.name, history.banten_id, history.action, history.description, history.prev_data, history.new_data, history.action_date, history.status 
+        FROM history LEFT JOIN banten ON history.banten_id = banten.id ORDER BY action_date DESC");
 $stmt->execute();
 $history = $stmt->get_result();
 $stmt->close();
@@ -72,6 +73,7 @@ if (isset($_SESSION['message'])) {
         <tr>
             <th>ID</th>
             <th>Nama Produk</th>
+            <th>Banten Id</th>
             <th>Action</th>
             <th>Description</th>
             <th>Changed Fields</th>
@@ -80,9 +82,11 @@ if (isset($_SESSION['message'])) {
         </tr>
     </thead>
     <tbody>
+        <?php $j = 1; ?>
         <?php while ($row = $history->fetch_assoc()): ?>
         <tr>
-            <td><?= $row['id'] ?></td>
+            <td><?= $j++ ?></td>
+            <td><?= $row['name'] ?></td>
             <td><?= $row['banten_id'] ?></td>
             <td><?= $row['action'] ?></td>
             <td><?= $row['description'] ?></td>

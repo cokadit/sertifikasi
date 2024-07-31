@@ -9,6 +9,14 @@ use App\Functions\BantenFunctions;
 $db = new DBConnection();
 $conn = $db->conn;
 
+if ($conn->connect_error) {
+    die("Connection failed: " . $conn->connect_error);
+}
+
+$id = $_GET['id'];
+$banten = BantenFunctions::getBantenById($conn, $id);
+
+
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $id = $_POST['id'];
     $delete_reason = $_POST['delete_reason'];
@@ -22,8 +30,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     }
 }
 
-// Fetch the Banten data to show before deletion
-// ...
 
 if (isset($_SESSION['message'])) {
     echo '<div class="alert alert-warning alert-dismissible fade show">' . $_SESSION['message'] . '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div>';

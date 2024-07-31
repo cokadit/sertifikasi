@@ -13,6 +13,15 @@ class BantenFunctions{
         return $result;
     }
 
+    public static function getBantenById($conn, $id) {
+        $stmt = $conn->prepare("SELECT * FROM banten WHERE id = ?");
+        $stmt->bind_param("i", $id);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $banten = $result->fetch_assoc();
+        $stmt->close();
+        return $banten;
+    }
     
     public static function addBanten($conn, $name, $price, $description, $quantity, $min_grosir, $grosir_price, $image) {
         $stmt = $conn->prepare("INSERT INTO banten (name, price, description, quantity, min_grosir, grosir_price, image) VALUES (?, ?, ?, ?, ?, ?, ?)");
@@ -52,6 +61,7 @@ class BantenFunctions{
         $result = $stmt->get_result();
         $prev_data = $result->fetch_assoc();
         $stmt->close();
+        
 
         $stmt = $conn->prepare("DELETE FROM banten WHERE id = ?");
         $stmt->bind_param("i", $id);
